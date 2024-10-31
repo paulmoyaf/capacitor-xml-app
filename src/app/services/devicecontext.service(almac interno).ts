@@ -9,7 +9,6 @@ export class DeviceContextService {
   infoTerminal$ = this.infoTerminalSubject.asObservable();
   deviceType: string = 'unknown';
 
-  constructor() {}
 
   async loadConfigFile(): Promise<void> {
     if (!Capacitor.isNativePlatform()) {
@@ -20,89 +19,55 @@ export class DeviceContextService {
 
     if (Capacitor.getPlatform() === 'android') {
       this.deviceType = 'android';
-      const permissionGranted = await this.requestExternalStoragePermission();
-      if (permissionGranted) {
-        await this.ensureConfigDirectoryExists();  // Asegura que la carpeta CONFIG exista
-        await this.copyConfigToExternalStorage();
-        await this.readConfigFromExternalStorage();
-      } else {
-        this.infoTerminalSubject.next({ error: 'Permiso de almacenamiento externo denegado' });
-      }
+      await this.copyConfigToInternalStorage();  // Copiamos el archivo a almacenamiento interno
+      await this.readConfigFromAndroid();
     }
     console.log('Device Type:', this.deviceType);
   }
 
-  // Solicita permiso para acceder al almacenamiento externo en Android 11+
-  private async requestExternalStoragePermission(): Promise<boolean> {
-    const permissions = await Filesystem.requestPermissions();
-    return permissions.publicStorage === 'granted';
-  }
-
-  // Verifica y crea la carpeta CONFIG en Directory.External si no existe
-  private async ensureConfigDirectoryExists() {
+  private async copyConfigToInternalStorage() {
     try {
-      await Filesystem.mkdir({
-        path: 'CONFIG',
-        directory: Directory.External,
-        recursive: true  // Crea la carpeta y sus subdirectorios si no existen
-      });
-      console.log('Carpeta CONFIG creada en Directory.External');
-    } catch (error) {
-      if (error instanceof Error) {
-        if (error.message !== 'Directory exists') {
-          console.error('Error al crear la carpeta CONFIG:', error.message);
-        }
-      } else {
-        console.error('Error desconocido al crear la carpeta CONFIG:', error);
-      }
-    }
-  }
-
-
-  // Copia CONFIG.xml desde assets a Directory.External
-  private async copyConfigToExternalStorage() {
-    try {
-      // Leemos el archivo desde los assets
+      // Leemos el archivo desde los assets con fetch
       const response = await fetch('assets/CONFIG.xml');
       if (!response.ok) {
         throw new Error(`Error al cargar CONFIG.xml: ${response.statusText}`);
       }
       const configData = await response.text();
 
-      // Guardamos el archivo en Directory.External
+      // Guardamos el archivo en Directory.Data
       await Filesystem.writeFile({
-        path: 'CONFIG/CONFIG.xml',
+        path: 'CONFIG.xml',
         data: configData,
-        directory: Directory.External,
+        directory: Directory.Data,
         encoding: Encoding.UTF8
       });
 
-      console.log('Archivo CONFIG.xml copiado a Directory.External');
+      console.log('Archivo CONFIG.xml copiado a Directory.Data');
     } catch (error) {
-      console.error('Error al copiar CONFIG.xml a Directory.External:', error);
+      console.error('Error al copiar CONFIG.xml a Directory.Data:', error);
     }
   }
 
-  // Lee CONFIG.xml desde Directory.External
-  private async readConfigFromExternalStorage() {
+
+  private async readConfigFromAndroid() {
     try {
-      console.log('Intentando leer CONFIG.xml desde Directory.External');
+      console.log('Intentando leer CONFIG.xml desde Directory.Data');
       const result = await Filesystem.readFile({
-        path: 'CONFIG/CONFIG.xml',
-        directory: Directory.External,
+        path: 'CONFIG.xml',  // Ruta dentro del directorio de datos de la app
+        directory: Directory.Data,
         encoding: Encoding.UTF8
       });
 
+      console.log('Archivo CONFIG.xml encontrado:', result);
       const data = typeof result.data === 'string' ? result.data : await this.blobToString(result.data);
       this.parseConfigXML(data);
 
     } catch (error) {
-      console.error('Error al leer CONFIG.xml desde Directory.External:', error);
-      this.infoTerminalSubject.next({ error: 'Error al leer el archivo desde el almacenamiento externo' });
+      console.error('Error al leer CONFIG.xml en Directory.Data:', error);
+      this.infoTerminalSubject.next({ error: 'Error al leer el archivo en Android' });
     }
   }
 
-  // Convierte Blob a String si es necesario
   private async blobToString(blob: Blob): Promise<string> {
     return await blob.text();
   }
@@ -122,7 +87,6 @@ export class DeviceContextService {
       });
   }
 
-  // Función para parsear el archivo XML y extraer los datos
   private parseConfigXML(data: string) {
     try {
       const parser = new DOMParser();
