@@ -22,8 +22,8 @@ export class DeviceContextService {
       this.deviceType = 'android';
       const permissionGranted = await this.requestExternalStoragePermission();
       if (permissionGranted) {
-        await this.ensureConfigDirectoryExists();
-        await this.copyConfigToExternalStorage();
+        await this.ensureConfigDirectoryExists(); //Crear ruta
+        await this.copyConfigToExternalStorage(); // Copiar CONFIG del proyecto
         await this.readConfigFromExternalStorage();
       } else {
         this.infoTerminalSubject.next({ error: 'Permiso de almacenamiento externo denegado' });
@@ -57,21 +57,30 @@ export class DeviceContextService {
 
   private async copyConfigToExternalStorage() {
     try {
-      const response = await fetch('assets/CONFIG/CONFIG.xml');
-      if (!response.ok) {
-        throw new Error(`Error al cargar CONFIG.xml: ${response.statusText}`);
-      }
-      const configData = await response.text();
-
-      await Filesystem.writeFile({
+      await Filesystem.readFile({
         path: 'CONFIG/CONFIG.xml',
-        data: configData,
         directory: Directory.Documents,
         encoding: Encoding.UTF8
       });
-
+      console.log('El archivo CONFIG.xml ya existe. No se copiará.');
     } catch (error) {
-      console.error('Error al copiar CONFIG.xml a Directory.Documents:', error);
+      if (error instanceof Error && error.message.includes('File does not exist')) {
+        console.log('El archivo CONFIG.xml no existe. Procediendo a copiarlo.');
+        const response = await fetch('assets/CONFIG/CONFIG.xml');
+        if (!response.ok) {
+          throw new Error(`Error al cargar CONFIG.xml: ${response.statusText}`);
+        }
+        const configData = await response.text();
+
+        await Filesystem.writeFile({
+          path: 'CONFIG/CONFIG.xml',
+          data: configData,
+          directory: Directory.Documents,
+          encoding: Encoding.UTF8
+        });
+      } else {
+        console.error('Error inesperado al verificar la existencia de CONFIG.xml:', error);
+      }
     }
   }
 
@@ -92,7 +101,7 @@ export class DeviceContextService {
     }
   }
 
-  // Convierte Blob a String si es necesario
+  // Esto es útil porque algunos métodos de lectura de archivos pueden devolver datos en formato Blob
   private async blobToString(blob: Blob): Promise<string> {
     return await blob.text();
   }

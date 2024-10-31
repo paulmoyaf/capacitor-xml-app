@@ -5,6 +5,8 @@
     "ng": "ng",
     "start": "ng serve",
     "build": "ng build",
+    "run:movil": "npm run build:capacitor && npx cap copy android && npx cap open android && npx cap run android --target realme-rmx3363-1a9aa7e5",
+    "run:zebra": "npm run build:capacitor && npx cap copy android && npx cap open android && npx cap run android --target 22075522513524",
     "build:capacitor": "ng build --configuration production && npx cap sync",
     "build:capacitor:android": "ng build --configuration production && npx cap sync android && cd android && ./gradlew assembleDebug"
   },

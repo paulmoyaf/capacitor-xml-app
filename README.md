@@ -1,27 +1,17 @@
-# CapacitorXmlApp
+Crea un archivo CONFIG/CONFIG.xml dentro de la carpeta de Documents del alamcenamiento de los Android
 
-This project was generated with [Angular CLI](https://github.com/angular/angular-cli) version 16.0.2.
+El archivo lo copia desde: assets/CONFIG/CONFIG.xml que se encuentra en el proyecto
 
-## Development server
 
-Run `ng serve` for a dev server. Navigate to `http://localhost:4200/`. The application will automatically reload if you change any of the source files.
+Pasos importantes
+en Manifest:
+  <uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE" />
 
-## Code scaffolding
+en file_paths.xml (android\app\src\main\res\xml\file_paths.xml):
+    <?xml version="1.0" encoding="utf-8"?>
+    <paths xmlns:android="http://schemas.android.com/apk/res/android">
+        <external-path name="config_files" path="CONFIG/" />
+    </paths>
 
-Run `ng generate component component-name` to generate a new component. You can also use `ng generate directive|pipe|service|class|guard|interface|enum|module`.
-
-## Build
-
-Run `ng build` to build the project. The build artifacts will be stored in the `dist/` directory.
-
-## Running unit tests
-
-Run `ng test` to execute the unit tests via [Karma](https://karma-runner.github.io).
-
-## Running end-to-end tests
-
-Run `ng e2e` to execute the end-to-end tests via a platform of your choice. To use this command, you need to first add a package that implements end-to-end testing capabilities.
-
-## Further help
-
-To get more help on the Angular CLI use `ng help` or go check out the [Angular CLI Overview and Command Reference](https://angular.io/cli) page.
+Opcional para ejecutar un script
+SCRIPT PARA IMPLEMENTAR: "build:capacitor": "npm run build -- --project=capacitor-xml-app --configuration=production && npx cap copy && npx cap sync --inline"
