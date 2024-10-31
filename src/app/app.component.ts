@@ -1,6 +1,6 @@
 import { Component, ChangeDetectorRef, OnInit } from '@angular/core';
-import { DeviceContextService } from './services/devicecontext.service';
 import { CommonModule } from '@angular/common';
+import { DeviceContextService } from './services/devicecontext.service';
 
 @Component({
   selector: 'app-root',
@@ -20,7 +20,7 @@ import { CommonModule } from '@angular/common';
   styles: []
 })
 export class AppComponent implements OnInit {
-  title = 'Capacitor XML PoolApp';
+  title = 'Capacitor-XML PoolApp';
   deviceMessage: string = '';
   infoTerminal: any;
 
